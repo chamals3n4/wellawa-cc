@@ -9,6 +9,7 @@ import {
   query,
   setDoc,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
@@ -120,6 +121,7 @@ function App() {
             id: studentDoc.id,
             name: data.name ?? "",
             indexNumber: data.indexNumber ?? data.roll ?? "",
+            gender: data.gender === "Female" ? "Female" : "Male",
           };
         });
 
@@ -129,6 +131,19 @@ function App() {
             ? current
             : nextStudents[0]?.id ?? ""
         );
+
+        const studentsMissingGender = snapshot.docs.filter(
+          (studentDoc) => !studentDoc.data().gender
+        );
+        if (studentsMissingGender.length > 0) {
+          const batch = writeBatch(db);
+          studentsMissingGender.forEach((studentDoc) => {
+            batch.update(studentDoc.ref, { gender: "Male" });
+          });
+          batch.commit().catch((error) => {
+            console.error("[firestore][students] gender backfill failed:", error);
+          });
+        }
       },
       (error) => {
         console.error("[firestore][students] snapshot error:", error);
@@ -221,7 +236,7 @@ function App() {
     }
   }
 
-  async function addStudent(name, roll) {
+  async function addStudent(name, roll, gender) {
     if (!userId) return;
     const trimmedName = name.trim();
     if (!trimmedName) return;
@@ -230,6 +245,7 @@ function App() {
       userId,
       name: trimmedName,
       indexNumber: roll.trim() || `STU-${students.length + 1}`,
+      gender: gender === "Female" ? "Female" : "Male",
     });
 
     const marksDocRef = doc(db, "marks", studentDocRef.id);
@@ -240,7 +256,7 @@ function App() {
     );
   }
 
-  async function updateStudentDetails(studentId, name, roll) {
+  async function updateStudentDetails(studentId, name, roll, gender) {
     if (!userId) return;
     const trimmedName = name.trim();
     if (!trimmedName) return;
@@ -250,6 +266,7 @@ function App() {
     await updateDoc(studentRef, {
       name: trimmedName,
       indexNumber: roll.trim() || existingStudent?.indexNumber || "STU",
+      gender: gender === "Female" ? "Female" : "Male",
     });
   }
 
@@ -270,6 +287,7 @@ function App() {
         userId,
         name,
         indexNumber: roll || `STU-${students.length + rowIndex + 1}`,
+        gender: "Male",
       });
 
       const marksDocRef = doc(db, "marks", studentDocRef.id);

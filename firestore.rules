@@ -15,9 +15,14 @@ service cloud.firestore {
       allow read, write: if signedIn();
     }
 
-    // Shared general settings
-    match /general/{docId} {
+    // Exactly one shared general settings document
+    match /general/shared {
       allow read, write: if signedIn();
+    }
+
+    // Deny any other general docs to prevent duplicates.
+    match /general/{docId} {
+      allow read, write: if false;
     }
   }
 }

@@ -24,9 +24,12 @@ function EditStudentPage({ students, onUpdateStudent }) {
 
   return (
     <AddStudentPage
-      onSaveStudent={(name, roll) => onUpdateStudent(student.id, name, roll)}
+      onSaveStudent={(name, roll, gender) =>
+        onUpdateStudent(student.id, name, roll, gender)
+      }
       initialName={student.name}
       initialRoll={student.indexNumber}
+      initialGender={student.gender ?? "Male"}
       title="Edit Student"
       description="Update student details and save."
       submitText="Update Student"

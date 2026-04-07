@@ -5,6 +5,7 @@ function AddStudentPage({
   onSaveStudent,
   initialName = "",
   initialRoll = "",
+  initialGender = "Male",
   title = "Add New Student",
   description = "Enter student details and save.",
   submitText = "Save Student",
@@ -12,9 +13,13 @@ function AddStudentPage({
   const navigate = useNavigate();
   const [name, setName] = useState(initialName);
   const [roll, setRoll] = useState(initialRoll);
+  const [gender, setGender] = useState(initialGender);
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const isDirty = name.trim() !== initialName.trim() || roll.trim() !== initialRoll.trim();
+  const isDirty =
+    name.trim() !== initialName.trim() ||
+    roll.trim() !== initialRoll.trim() ||
+    gender !== initialGender;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,7 +29,7 @@ function AddStudentPage({
     setIsSaving(true);
 
     try {
-      await onSaveStudent(name, roll);
+      await onSaveStudent(name, roll, gender);
       navigate("/students");
     } catch (error) {
       setFormError(error?.message ?? "Failed to save student.");
@@ -59,6 +64,18 @@ function AddStudentPage({
             placeholder="9573"
             className="w-full border border-slate-300 px-3 py-2 text-base outline-none focus:border-blue-500"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm text-slate-700">Gender</label>
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            className="w-full border border-slate-300 px-3 py-2 text-base outline-none focus:border-blue-500"
+          >
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:flex">
