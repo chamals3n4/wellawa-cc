@@ -8,7 +8,6 @@ import {
   onSnapshot,
   query,
   setDoc,
-  where,
   updateDoc,
 } from "firebase/firestore";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -79,10 +78,7 @@ function App() {
 
   const studentsCollectionRef = useMemo(() => collection(db, "students"), []);
   const marksCollectionRef = useMemo(() => collection(db, "marks"), []);
-  const generalSettingsRef = useMemo(
-    () => (userId ? doc(db, "general", userId) : null),
-    [userId]
-  );
+  const generalSettingsRef = useMemo(() => doc(db, "general", "shared"), []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -107,13 +103,13 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!userId) {
+    if (!isLoggedIn) {
       setStudentsBase([]);
       setFirestoreError("");
       return undefined;
     }
 
-    const studentsQuery = query(studentsCollectionRef, where("userId", "==", userId));
+    const studentsQuery = query(studentsCollectionRef);
     const unsubscribe = onSnapshot(
       studentsQuery,
       (snapshot) => {
@@ -142,15 +138,15 @@ function App() {
     );
 
     return () => unsubscribe();
-  }, [studentsCollectionRef, userId]);
+  }, [isLoggedIn, studentsCollectionRef]);
 
   useEffect(() => {
-    if (!userId) {
+    if (!isLoggedIn) {
       setMarksByStudentId({});
       return undefined;
     }
 
-    const marksQuery = query(marksCollectionRef, where("userId", "==", userId));
+    const marksQuery = query(marksCollectionRef);
     const unsubscribe = onSnapshot(
       marksQuery,
       (snapshot) => {
@@ -167,10 +163,10 @@ function App() {
     );
 
     return () => unsubscribe();
-  }, [marksCollectionRef, userId]);
+  }, [isLoggedIn, marksCollectionRef]);
 
   useEffect(() => {
-    if (!generalSettingsRef) {
+    if (!isLoggedIn) {
       setSchoolName("Wellawa Central COllorge");
       setGradeName("11-B");
       setSubjectNames(createDefaultSubjectNames());
@@ -195,7 +191,7 @@ function App() {
     });
 
     return () => unsubscribe();
-  }, [generalSettingsRef]);
+  }, [generalSettingsRef, isLoggedIn]);
 
   async function handleLogin(e) {
     e.preventDefault();

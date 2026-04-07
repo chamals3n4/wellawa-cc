@@ -5,25 +5,19 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
-    }
-
-    // Root students collection
+    // Shared students collection for all signed-in teachers
     match /students/{studentId} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow read, write: if signedIn();
     }
 
-    // Root marks collection (doc id == studentId)
+    // Shared marks collection (doc id == studentId)
     match /marks/{studentId} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow read, write: if signedIn();
     }
 
-    // Root general settings per user
-    match /general/{uid} {
-      allow read, write: if isOwner(uid);
+    // Shared general settings
+    match /general/{docId} {
+      allow read, write: if signedIn();
     }
   }
 }
