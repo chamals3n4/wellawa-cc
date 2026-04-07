@@ -1,24 +1,32 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { exportSingleStudentReportPdf } from "../lib/exportSingleStudentReportPdf";
 
 function StudentsPage({
   students,
   getStudentTotal,
+  getStudentPlace,
   onSelectStudent,
   onDeleteStudent,
+  schoolName,
+  gradeName,
+  termName,
+  teacherName,
+  subjectNames,
 }) {
   const navigate = useNavigate();
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [activeGenderTab, setActiveGenderTab] = useState("Male");
-  const maleStudents = students.filter((student) => student.gender !== "Female");
-  const femaleStudents = students.filter((student) => student.gender === "Female");
+  const maleStudents = students.filter(
+    (student) => student.gender !== "Female",
+  );
+  const femaleStudents = students.filter(
+    (student) => student.gender === "Female",
+  );
 
   function renderStudentTable(title, items) {
     return (
       <div className="overflow-x-auto border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-          {title} ({items.length})
-        </div>
         <table className="min-w-[760px] border-collapse sm:min-w-full">
           <thead>
             <tr className="bg-slate-100">
@@ -75,6 +83,24 @@ function StudentsPage({
                       className="bg-[#003049] px-3 py-1.5 text-white hover:opacity-95"
                     >
                       Open Marks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        exportSingleStudentReportPdf({
+                          student,
+                          totalMarks: getStudentTotal(student),
+                          place: getStudentPlace(student.id),
+                          schoolName,
+                          gradeName,
+                          termName,
+                          teacherName,
+                          subjectNames,
+                        })
+                      }
+                      className="bg-green-500 px-3 py-1.5 text-white hover:opacity-95"
+                    >
+                      Export
                     </button>
                     <button
                       type="button"
@@ -160,7 +186,7 @@ function StudentsPage({
       {students.length > 0
         ? renderStudentTable(
             activeGenderTab === "Female" ? "Female Students" : "Male Students",
-            activeGenderTab === "Female" ? femaleStudents : maleStudents
+            activeGenderTab === "Female" ? femaleStudents : maleStudents,
           )
         : null}
 

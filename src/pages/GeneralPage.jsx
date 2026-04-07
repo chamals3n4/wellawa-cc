@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { SUBJECTS } from "../constants/subjects";
 
-function GeneralPage({ schoolName, gradeName, subjectNames, onSave }) {
+function GeneralPage({ schoolName, gradeName, termName, teacherName, subjectNames, onSave }) {
   const [formSchoolName, setFormSchoolName] = useState(schoolName);
   const [formGradeName, setFormGradeName] = useState(gradeName);
+  const [formTermName, setFormTermName] = useState(termName);
+  const [formTeacherName, setFormTeacherName] = useState(teacherName);
   const [formSubjectNames, setFormSubjectNames] = useState(subjectNames);
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -11,14 +13,31 @@ function GeneralPage({ schoolName, gradeName, subjectNames, onSave }) {
   const isDirty = useMemo(() => {
     const baseSchool = (schoolName ?? "").trim();
     const baseGrade = (gradeName ?? "").trim();
+    const baseTerm = (termName ?? "").trim();
+    const baseTeacher = (teacherName ?? "").trim();
     const currentSchool = (formSchoolName ?? "").trim();
     const currentGrade = (formGradeName ?? "").trim();
+    const currentTerm = (formTermName ?? "").trim();
+    const currentTeacher = (formTeacherName ?? "").trim();
     if (baseSchool !== currentSchool) return true;
     if (baseGrade !== currentGrade) return true;
+    if (baseTerm !== currentTerm) return true;
+    if (baseTeacher !== currentTeacher) return true;
     return SUBJECTS.some(
       (key) => (subjectNames?.[key] ?? "").trim() !== (formSubjectNames?.[key] ?? "").trim()
     );
-  }, [formGradeName, formSchoolName, formSubjectNames, gradeName, schoolName, subjectNames]);
+  }, [
+    formGradeName,
+    formSchoolName,
+    formSubjectNames,
+    formTeacherName,
+    formTermName,
+    gradeName,
+    schoolName,
+    subjectNames,
+    teacherName,
+    termName,
+  ]);
 
   function handleSubjectNameChange(subjectKey, value) {
     setFormSubjectNames((current) => ({
@@ -37,6 +56,8 @@ function GeneralPage({ schoolName, gradeName, subjectNames, onSave }) {
       await onSave({
         schoolName: formSchoolName.trim() || "School Name",
         gradeName: formGradeName.trim() || "Grade",
+        termName: formTermName.trim() || "Term",
+        teacherName: formTeacherName.trim() || "Teacher",
         subjectNames: SUBJECTS.reduce((acc, subjectKey) => {
           acc[subjectKey] = formSubjectNames[subjectKey]?.trim() || subjectKey;
           return acc;
@@ -71,6 +92,24 @@ function GeneralPage({ schoolName, gradeName, subjectNames, onSave }) {
               value={formGradeName}
               onChange={(e) => setFormGradeName(e.target.value)}
               placeholder="11-B"
+              className="w-full border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">Term</span>
+            <input
+              value={formTermName}
+              onChange={(e) => setFormTermName(e.target.value)}
+              placeholder="1st Term Test"
+              className="w-full border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">Teacher Name</span>
+            <input
+              value={formTeacherName}
+              onChange={(e) => setFormTeacherName(e.target.value)}
+              placeholder="Y.M.G.S Yapa"
               className="w-full border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
             />
           </label>

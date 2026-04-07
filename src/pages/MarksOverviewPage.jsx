@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { exportMarksReportPdf } from "../lib/exportMarksReportPdf";
 
 function placeClass(place) {
   if (place === 1) return "bg-amber-100 text-amber-800";
@@ -8,7 +9,15 @@ function placeClass(place) {
   return "bg-slate-100 text-slate-700";
 }
 
-function MarksOverviewPage({ students, getStudentTotal }) {
+function MarksOverviewPage({
+  students,
+  getStudentTotal,
+  schoolName,
+  gradeName,
+  termName,
+  teacherName,
+  subjectNames,
+}) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
@@ -36,6 +45,17 @@ function MarksOverviewPage({ students, getStudentTotal }) {
     }));
   }, [getStudentTotal, search, students]);
 
+  function exportReport() {
+    exportMarksReportPdf({
+      rankedStudents,
+      schoolName,
+      gradeName,
+      termName,
+      teacherName,
+      subjectNames,
+    });
+  }
+
   return (
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -62,6 +82,13 @@ function MarksOverviewPage({ students, getStudentTotal }) {
             className="bg-[#003049] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
           >
             Bulk Marks
+          </button>
+          <button
+            type="button"
+            onClick={exportReport}
+            className="bg-[#003049] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
+          >
+            Export Report
           </button>
         </div>
       </div>

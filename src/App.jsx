@@ -60,6 +60,8 @@ function App() {
   const [activeStudentId, setActiveStudentId] = useState("");
   const [schoolName, setSchoolName] = useState("Wellawa Central COllorge");
   const [gradeName, setGradeName] = useState("11-B");
+  const [termName, setTermName] = useState("1st Term Test");
+  const [teacherName, setTeacherName] = useState("Teacher");
   const [subjectNames, setSubjectNames] = useState(createDefaultSubjectNames);
 
   const students = useMemo(
@@ -184,6 +186,8 @@ function App() {
     if (!isLoggedIn) {
       setSchoolName("Wellawa Central COllorge");
       setGradeName("11-B");
+      setTermName("1st Term Test");
+      setTeacherName("Teacher");
       setSubjectNames(createDefaultSubjectNames());
       return undefined;
     }
@@ -192,6 +196,8 @@ function App() {
       if (!snapshot.exists()) {
         setSchoolName("Wellawa Central COllorge");
         setGradeName("11-B");
+        setTermName("1st Term Test");
+        setTeacherName("Teacher");
         setSubjectNames(createDefaultSubjectNames());
         return;
       }
@@ -199,6 +205,8 @@ function App() {
       const data = snapshot.data();
       setSchoolName(data.schoolName ?? "Wellawa Central COllorge");
       setGradeName(data.gradeName ?? "11-B");
+      setTermName(data.termName ?? "1st Term Test");
+      setTeacherName(data.teacherName ?? "Teacher");
       setSubjectNames({
         ...createDefaultSubjectNames(),
         ...(data.subjectNames ?? {}),
@@ -357,6 +365,8 @@ function App() {
   async function handleSaveGeneralSettings({
     schoolName: nextSchool,
     gradeName: nextGrade,
+    termName: nextTerm,
+    teacherName: nextTeacher,
     subjectNames: nextSubjectNames,
   }) {
     if (!generalSettingsRef) return;
@@ -365,6 +375,8 @@ function App() {
       {
         schoolName: nextSchool,
         gradeName: nextGrade,
+        termName: nextTerm,
+        teacherName: nextTeacher,
         subjectNames: nextSubjectNames,
       },
       { merge: true }
@@ -377,6 +389,20 @@ function App() {
       return Number.isNaN(mark) ? total : total + mark;
     }, 0);
   }
+
+  const studentPlaceById = useMemo(() => {
+    const ranked = [...students].sort((a, b) => {
+      const totalA = getStudentTotal(a);
+      const totalB = getStudentTotal(b);
+      if (totalA !== totalB) return totalB - totalA;
+      return a.name.localeCompare(b.name);
+    });
+    const map = {};
+    ranked.forEach((student, index) => {
+      map[student.id] = index + 1;
+    });
+    return map;
+  }, [students]);
 
   if (!authReady) {
     return (
@@ -422,8 +448,14 @@ function App() {
               <StudentsPage
                 students={students}
                 getStudentTotal={getStudentTotal}
+                getStudentPlace={(studentId) => studentPlaceById[studentId] ?? "-"}
                 onSelectStudent={setActiveStudentId}
                 onDeleteStudent={deleteStudent}
+                schoolName={schoolName}
+                gradeName={gradeName}
+                termName={termName}
+                teacherName={teacherName}
+                subjectNames={subjectNames}
               />
             }
           />
@@ -447,6 +479,11 @@ function App() {
               <MarksOverviewPage
                 students={students}
                 getStudentTotal={getStudentTotal}
+                schoolName={schoolName}
+                gradeName={gradeName}
+                termName={termName}
+                teacherName={teacherName}
+                subjectNames={subjectNames}
               />
             }
           />
@@ -480,6 +517,8 @@ function App() {
               <GeneralPage
                 schoolName={schoolName}
                 gradeName={gradeName}
+                termName={termName}
+                teacherName={teacherName}
                 subjectNames={subjectNames}
                 onSave={handleSaveGeneralSettings}
               />
