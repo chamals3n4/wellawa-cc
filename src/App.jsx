@@ -54,6 +54,7 @@ function App() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [firestoreError, setFirestoreError] = useState("");
   const [studentsBase, setStudentsBase] = useState([]);
   const [marksByStudentId, setMarksByStudentId] = useState({});
   const [activeStudentId, setActiveStudentId] = useState("");
@@ -85,6 +86,8 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.info("[auth] projectId:", db.app.options.projectId);
+      console.info("[auth] uid:", user?.uid ?? null);
       setCurrentUser(user);
       setIsLoggedIn(Boolean(user));
       setAuthReady(true);
@@ -106,27 +109,37 @@ function App() {
   useEffect(() => {
     if (!userId) {
       setStudentsBase([]);
+      setFirestoreError("");
       return undefined;
     }
 
     const studentsQuery = query(studentsCollectionRef, where("userId", "==", userId));
-    const unsubscribe = onSnapshot(studentsQuery, (snapshot) => {
-      const nextStudents = snapshot.docs.map((studentDoc) => {
-        const data = studentDoc.data();
-        return {
-          id: studentDoc.id,
-          name: data.name ?? "",
-          indexNumber: data.indexNumber ?? data.roll ?? "",
-        };
-      });
+    const unsubscribe = onSnapshot(
+      studentsQuery,
+      (snapshot) => {
+        setFirestoreError("");
+        const nextStudents = snapshot.docs.map((studentDoc) => {
+          const data = studentDoc.data();
+          return {
+            id: studentDoc.id,
+            name: data.name ?? "",
+            indexNumber: data.indexNumber ?? data.roll ?? "",
+          };
+        });
 
-      setStudentsBase(nextStudents);
-      setActiveStudentId((current) =>
-        current && nextStudents.some((student) => student.id === current)
-          ? current
-          : nextStudents[0]?.id ?? ""
-      );
-    });
+        setStudentsBase(nextStudents);
+        setActiveStudentId((current) =>
+          current && nextStudents.some((student) => student.id === current)
+            ? current
+            : nextStudents[0]?.id ?? ""
+        );
+      },
+      (error) => {
+        console.error("[firestore][students] snapshot error:", error);
+        setFirestoreError(error?.message ?? "Unable to read students from Firestore.");
+        setStudentsBase([]);
+      }
+    );
 
     return () => unsubscribe();
   }, [studentsCollectionRef, userId]);
@@ -138,14 +151,20 @@ function App() {
     }
 
     const marksQuery = query(marksCollectionRef, where("userId", "==", userId));
-    const unsubscribe = onSnapshot(marksQuery, (snapshot) => {
-      const nextMarks = {};
-      snapshot.docs.forEach((markDoc) => {
-        const data = markDoc.data();
-        nextMarks[markDoc.id] = data.marks ?? {};
-      });
-      setMarksByStudentId(nextMarks);
-    });
+    const unsubscribe = onSnapshot(
+      marksQuery,
+      (snapshot) => {
+        const nextMarks = {};
+        snapshot.docs.forEach((markDoc) => {
+          const data = markDoc.data();
+          nextMarks[markDoc.id] = data.marks ?? {};
+        });
+        setMarksByStudentId(nextMarks);
+      },
+      (error) => {
+        console.error("[firestore][marks] snapshot error:", error);
+      }
+    );
 
     return () => unsubscribe();
   }, [marksCollectionRef, userId]);
@@ -376,6 +395,11 @@ function App() {
         gradeName={gradeName}
         onLogout={handleLogout}
       >
+        {firestoreError ? (
+          <div className="mb-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            Firestore error: {firestoreError}
+          </div>
+        ) : null}
         <Routes>
           <Route path="/" element={<Navigate to="/students" replace />} />
           <Route
